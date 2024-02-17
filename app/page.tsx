@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Map, View } from "ol";
 import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
@@ -25,6 +25,7 @@ interface DataItem {
 
 export default function Home() {
   const [dataArray, setDataArray] = useState<DataItem[]>([]);
+  const mapRef = useRef<Map | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,8 +36,8 @@ export default function Home() {
 
         while (hasMoreData) {
           const response = await fetch(
-            // `https://data.cityofnewyork.us/resource/43nn-pn8j.json?$limit=50000&$offset=${offset}`
-            `https://data.cityofnewyork.us/resource/43nn-pn8j.json?$limit=1000&$offset=${offset}`
+            `https://data.cityofnewyork.us/resource/43nn-pn8j.json?$limit=50000&$offset=${offset}`
+            // `https://data.cityofnewyork.us/resource/43nn-pn8j.json?$limit=1000&$offset=${offset}`
           );
           const data: DataItem[] = await response.json();
 
@@ -72,6 +73,8 @@ export default function Home() {
             projection: "EPSG:3857",
           }),
         });
+        mapRef.current = map;
+
         // Create a vector source to hold the markers
         const vectorSource = new VectorSource();
 
@@ -103,8 +106,9 @@ export default function Home() {
         map.addLayer(vectorLayer);
 
         return () => {
-          // Clean up map on unmount
-          map.setTarget(undefined);
+          if (mapRef.current) {
+            mapRef.current.setTarget(undefined);
+          }
         };
       } catch (error) {
         console.error("Error fetching data:", error);
