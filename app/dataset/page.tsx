@@ -1,45 +1,68 @@
-"use client"
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+"use client";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 
 interface DataItem {
   camis: string;
   dba: string;
   violation_code: string;
   violation_description: string;
+  longitude: string;
+  latitude: string;
 }
 
-export default function dataset() {
-  const [dataArray, setDataArray] = useState<DataItem[]>([]); // Change to DataItem[]
-  const [violationsCount, setViolationsCount] = useState<{ [key: string]: number }>({}); // Object to store violations count
+export default function Dataset() {
+  const [dataArray, setDataArray] = useState<DataItem[]>([]);
+  const [violationsCount, setViolationsCount] = useState<{
+    [key: string]: number;
+  }>({});
 
   useEffect(() => {
-    // Fetch the JSON data from the API endpoint
-    fetch('https://data.cityofnewyork.us/resource/43nn-pn8j.json?$offset=1000')
-      .then((response: Response) => response.json()) // Parse the JSON response
-      .then((data: DataItem[]) => {
-        // Extracting dba and violation_code arrays
-        const idArray = data.map(item => item.camis);
-        const dbaArray = data.map(item => item.dba);
-        const violationCodeArray = data.map(item => item.violation_code);
-        const violationDescription = data.map(item => item.violation_description);
-        // Setting the dataArray state with DataItem array
-        setDataArray(data);
+    const fetchData = async () => {
+      try {
+        let allData: DataItem[] = [];
+        let offset = 0;
+        let hasMoreData = true;
 
-        // Count violation(s) for each restaurant 
-        const violationsCountObj: { [key: string]: number } = {};
-        data.forEach(item => {
-          if (item.camis in violationsCountObj) {
-            violationsCountObj[item.camis]++;
+        while (hasMoreData) {
+          const response = await fetch(
+            // `https://data.cityofnewyork.us/resource/43nn-pn8j.json?$limit=50000&$offset=${offset}`
+            `https://data.cityofnewyork.us/resource/43nn-pn8j.json?$limit=1000&$offset=${offset}`
+          );
+          const data: DataItem[] = await response.json();
+
+          if (data.length === 0) {
+            hasMoreData = false;
           } else {
-            violationsCountObj[item.camis] = 1;
+            allData = [
+              ...allData,
+              ...data.map((item) => ({
+                ...item,
+                latitude: item.latitude ?? "", // Ensure latitude is not null or undefined
+                longitude: item.longitude ?? "", // Ensure longitude is not null or undefined
+              })),
+            ];
+            offset += 50000;
           }
+        }
+
+        setDataArray(allData);
+
+        // Count violation(s) for each restaurant
+        const violationsCountObj: { [key: string]: number } = {};
+        allData.forEach((item) => {
+          violationsCountObj[item.camis] = violationsCountObj[item.camis]
+            ? violationsCountObj[item.camis] + 1
+            : 1;
         });
         setViolationsCount(violationsCountObj);
-      })
-      .catch((error: Error) => {
-        console.error('Error fetching data:', error);
-      });
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Handle error gracefully, e.g., display an error message on UI
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -48,15 +71,17 @@ export default function dataset() {
         <Link href="/">Home</Link>
       </button>
       <div>
-        <ol>
-          {dataArray.map((item, index) => (
-            (item.violation_code? 
-            <li key={index}>
-              {item.dba} - {item.violation_description} ({violationsCount[item.camis]} violations)
-            </li>
-            : null)
-          ))}
-        </ol>
+        <ul>
+          {dataArray.map((item, index) =>
+            item.violation_code ? (
+              <li key={index}>
+                {index} {item.dba} - {item.violation_description} (
+                {violationsCount[item.camis] ?? 0} violations) - Latitude:{" "}
+                {item.latitude}, Longitude: {item.longitude}
+              </li>
+            ) : null
+          )}
+        </ul>
       </div>
     </>
   );
