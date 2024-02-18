@@ -42,7 +42,7 @@ export default function Home() {
   const [dataArray, setDataArray] = useState<DataItem[]>([]);
   const mapRef = useRef<Map | null>(null);
   const addedCoordinates = useRef<Set<string>>(new Set());
-  const [overlay, setOverlay] = useState(null);
+  const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState("");
 
@@ -189,7 +189,9 @@ export default function Home() {
                 }
               }
 
-              document.getElementById("popup-content").innerHTML = popupContent;
+              (
+                document.getElementById("popup-content") as HTMLElement
+              ).innerHTML = popupContent;
               overlay.setPosition(coordinate);
 
               // Add event listeners to restaurant names
@@ -197,8 +199,12 @@ export default function Home() {
                 document.querySelectorAll(".restaurant-name");
               restaurantNames.forEach((restaurantName) => {
                 restaurantName.addEventListener("click", function (event) {
-                  const camis = event.target.getAttribute("data-camis");
-                  const dba = event.target.getAttribute("data-dba");
+                  const camis =
+                    (event.target as HTMLElement)?.getAttribute("data-camis") ??
+                    "Default Value";
+                  const dba =
+                    (event.target as HTMLElement)?.getAttribute("data-dba") ??
+                    "Default Value";
                   if (camis) {
                     showModal(camis, dba);
                   }
@@ -209,7 +215,7 @@ export default function Home() {
             }
           });
 
-          const openModal = (content) => {
+          const openModal = (content: string) => {
             setModalContent(content);
             setModalVisible(true);
           };
@@ -223,7 +229,7 @@ export default function Home() {
             let violationIndex = 1;
             if (violationsSet) {
               violationsListHTML = "<ol>"; // Use <ol> instead of <ul> for numbered list
-              violationsSet.forEach((violation) => {
+              violationsSet.forEach((violation: string) => {
                 violationsListHTML += `<li><strong>${violationIndex++}.</strong> ${violation}</li>`; // Increment and include the index in each <li>
               });
               violationsListHTML += "</ol>";
@@ -245,8 +251,8 @@ export default function Home() {
           // Create a vector source to hold the markers
           const vectorSource = new VectorSource();
           // Track violation codes for each restaurant
-          const violationCodesMap = new Map<string, Set<string>>();
-          const violationsMap = new Map<string, Set<string>>();
+          const violationCodesMap = new Map();
+          const violationsMap = new Map();
 
           // Add markers for each restaurant
           allData.forEach((item) => {
