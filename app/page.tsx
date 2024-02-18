@@ -43,6 +43,8 @@ export default function Home() {
   const mapRef = useRef<Map | null>(null);
   const addedCoordinates = useRef<Set<string>>(new Set());
   const [overlay, setOverlay] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -73,6 +75,10 @@ export default function Home() {
       return false;
     };
   }, []);
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
 
   useEffect(() => {
     if (overlay) {
@@ -145,12 +151,12 @@ export default function Home() {
             );
 
             if (feature) {
-              console.log(feature);
+              // console.log(feature);
               const coordinate = evt.coordinate;
               let popupContent = "";
 
               if (Array.isArray(feature)) {
-                // If it's an array of features (cluster with less than 5 markers)
+                // If it's an array of features (cluster with less than 11 markers)
                 if (feature.length > 1) {
                   // Check if there are more than 1 markers
                   popupContent =
@@ -161,9 +167,13 @@ export default function Home() {
                     const numViolations = violationsSet
                       ? violationsSet.size
                       : 0;
-                    popupContent += `<li>${index + 1}. ${individualFeature.get(
+                    popupContent += `<li>${
+                      index + 1
+                    }. <span class="restaurant-name" data-camis="${camis}" data-dba="${individualFeature.get(
                       "dba"
-                    )} (${numViolations})</li>`;
+                    )}" style="cursor: pointer;">${individualFeature.get(
+                      "dba"
+                    )} (${numViolations})</span></li>`;
                   });
                   popupContent += "</ul>";
                 } else {
@@ -171,18 +181,66 @@ export default function Home() {
                   const camis = feature[0].get("camis");
                   const violationsSet = violationsMap.get(camis);
                   const numViolations = violationsSet ? violationsSet.size : 0;
-                  popupContent = `<p><u>Restaurant (# of Violations):</p></u><code>${feature[0].get(
+                  popupContent = `<p><u>Restaurant (# of Violations):</u></p><code><span class="restaurant-name" data-camis="${camis}" data-dba="${feature[0].get(
                     "dba"
-                  )} (${numViolations})</code>`;
+                  )}" style="cursor: pointer;">${feature[0].get(
+                    "dba"
+                  )} (${numViolations})</span></code>`;
                 }
               }
 
               document.getElementById("popup-content").innerHTML = popupContent;
               overlay.setPosition(coordinate);
+
+              // Add event listeners to restaurant names
+              const restaurantNames =
+                document.querySelectorAll(".restaurant-name");
+              restaurantNames.forEach((restaurantName) => {
+                restaurantName.addEventListener("click", function (event) {
+                  const camis = event.target.getAttribute("data-camis");
+                  const dba = event.target.getAttribute("data-dba");
+                  if (camis) {
+                    showModal(camis, dba);
+                  }
+                });
+              });
             } else {
               overlay.setPosition(undefined);
             }
           });
+
+          const openModal = (content) => {
+            setModalContent(content);
+            setModalVisible(true);
+          };
+
+          const showModal = (camis: string, dba: string) => {
+            // Fetch the violations for the specified restaurant (camis)
+            const violationsSet = violationsMap.get(camis);
+
+            // Generate HTML content for the violations list
+            let violationsListHTML = "";
+            let violationIndex = 1;
+            if (violationsSet) {
+              violationsListHTML = "<ol>"; // Use <ol> instead of <ul> for numbered list
+              violationsSet.forEach((violation) => {
+                violationsListHTML += `<li><strong>${violationIndex++}.</strong> ${violation}</li>`; // Increment and include the index in each <li>
+              });
+              violationsListHTML += "</ol>";
+            } else {
+              violationsListHTML = "<p>No violations found.</p>";
+            }
+
+            // Display the violations in a modal
+            const modalContent = `
+              <div>
+                <h2><u>Violations for <strong>${dba}</strong></u></h2>
+                ${violationsListHTML}
+              </div>
+            `;
+
+            openModal(modalContent);
+          };
 
           // Create a vector source to hold the markers
           const vectorSource = new VectorSource();
@@ -323,6 +381,17 @@ export default function Home() {
         <a href="#" id="popup-closer" className="ol-popup-closer"></a>
         <div id="popup-content"></div>
       </div>
+
+      {modalVisible && (
+        <div className="modal">
+          <div className="modal-content">
+            <span className="close" onClick={closeModal}>
+              &times;
+            </span>
+            <div dangerouslySetInnerHTML={{ __html: modalContent }}></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
