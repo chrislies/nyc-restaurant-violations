@@ -134,7 +134,7 @@ export default function Home() {
                 if (layer instanceof VectorLayer) {
                   if (layer.getSource() instanceof Cluster) {
                     const features = feature.get("features");
-                    if (features.length < 6) {
+                    if (features.length < 11) {
                       return features;
                     }
                   } else {
@@ -153,20 +153,27 @@ export default function Home() {
                 // If it's an array of features (cluster with less than 5 markers)
                 if (feature.length > 1) {
                   // Check if there are more than 1 markers
-                  popupContent = "<p>Restaurants:</p><ol>"; // Changed ul to ol
+                  popupContent =
+                    "<p><u>Restaurants (# of Violations):</u></p><ul>";
                   feature.forEach((individualFeature, index) => {
-                    // Added index parameter to forEach
+                    const camis = individualFeature.get("camis");
+                    const violationsSet = violationsMap.get(camis);
+                    const numViolations = violationsSet
+                      ? violationsSet.size
+                      : 0;
                     popupContent += `<li>${index + 1}. ${individualFeature.get(
                       "dba"
-                    )}</li>`; // Added index + 1
+                    )} (${numViolations})</li>`;
                   });
-                  popupContent += "</ol>"; // Changed ul to ol
+                  popupContent += "</ul>";
                 } else {
-                  // If there is only one marker in the cluster, display its dba
-                  popupContent =
-                    "<p>Restaurant:</p><code>" +
-                    feature[0].get("dba") +
-                    "</code>";
+                  // there is only one marker in the cluster
+                  const camis = feature[0].get("camis");
+                  const violationsSet = violationsMap.get(camis);
+                  const numViolations = violationsSet ? violationsSet.size : 0;
+                  popupContent = `<p><u>Restaurant (# of Violations):</p></u><code>${feature[0].get(
+                    "dba"
+                  )} (${numViolations})</code>`;
                 }
               }
 
@@ -179,14 +186,27 @@ export default function Home() {
 
           // Create a vector source to hold the markers
           const vectorSource = new VectorSource();
+          // Track violation codes for each restaurant
+          const violationCodesMap = new Map<string, Set<string>>();
+          const violationsMap = new Map<string, Set<string>>();
 
           // Add markers for each restaurant
           allData.forEach((item) => {
             const latitude = parseFloat(item.latitude);
             const longitude = parseFloat(item.longitude);
+            const camis = item.camis;
+            const violationCode = item.violation_code;
+            const violationDescription = item.violation_description;
+
+            if (camis && violationCode && violationDescription) {
+              const violationsSet =
+                violationsMap.get(camis) || new Set<string>();
+              violationsSet.add(`${violationCode}: ${violationDescription}`);
+              violationsMap.set(camis, violationsSet);
+            }
 
             if (!isNaN(latitude) && !isNaN(longitude)) {
-              const coordinateKey = `${item.camis},${latitude},${longitude}`;
+              const coordinateKey = `${camis},${latitude},${longitude}`;
 
               if (!addedCoordinates.current.has(coordinateKey)) {
                 const marker = new Feature({
