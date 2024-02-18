@@ -369,13 +369,6 @@ export default function Home() {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
-      <button className="absolute top-4 left-4 z-[999]">
-        <Link href="/dataset">
-          <span className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Go to Dataset
-          </span>
-        </Link>
-      </button>
       <div id="map" className="w-full h-full z-[997]"></div>
       <div id="popup" className="ol-popup z-[998]">
         <a href="#" id="popup-closer" className="ol-popup-closer"></a>
