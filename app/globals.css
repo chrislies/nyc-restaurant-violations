@@ -48,6 +48,13 @@ button {
 .ol-popup-closer:after {
   content: "✖";
 }
+#popup-content {
+  max-height: 550px;
+  overflow-y: auto;
+}
+#popup-content .restaurant-name:hover {
+  @apply underline;
+}
 
 /* Modal */
 .modal {
