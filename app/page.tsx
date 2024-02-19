@@ -143,7 +143,10 @@ export default function Home() {
                 if (layer instanceof VectorLayer) {
                   if (layer.getSource() instanceof Cluster) {
                     const features = feature.get("features");
-                    if (features.length < 11) {
+                    if (
+                      features.length < 16 ||
+                      (features.length > 15 && map.getView().getZoom() >= 15)
+                    ) {
                       return features;
                     }
                   } else {
@@ -209,8 +212,19 @@ export default function Home() {
                     (event.target as HTMLElement)?.getAttribute("data-dba") ??
                     "Default Value";
                   if (camis) {
-                    showModal(camis, dba);
+                    // Toggle font-bold class on click
+                    const targetElement = event.target as HTMLElement;
+                    if (targetElement) {
+                      document
+                        .querySelectorAll(".restaurant-name")
+                        .forEach((name) => {
+                          name.classList.remove("underline", "decoration-2");
+                        });
+
+                      targetElement.classList.add("underline", "decoration-2");
+                    }
                   }
+                  showModal(camis, dba);
                 });
               });
             } else {
