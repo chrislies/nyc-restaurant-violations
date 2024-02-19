@@ -143,11 +143,14 @@ export default function Home() {
                 if (layer instanceof VectorLayer) {
                   if (layer.getSource() instanceof Cluster) {
                     const features = feature.get("features");
-                    if (
-                      features.length < 16 ||
-                      (features.length > 15 && map.getView().getZoom() >= 15)
-                    ) {
-                      return features;
+                    const zoomLevel = map.getView().getZoom();
+                    if (features && zoomLevel !== undefined) {
+                      if (
+                        features.length < 16 ||
+                        (features.length > 15 && zoomLevel >= 15)
+                      ) {
+                        return features;
+                      }
                     }
                   } else {
                     return feature;
