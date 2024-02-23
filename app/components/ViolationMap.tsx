@@ -45,6 +45,7 @@ export default function ViolationMap() {
   const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState("");
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -254,7 +255,7 @@ export default function ViolationMap() {
           const showModal = (camis: string, dba: string) => {
             // Fetch the violations for the specified restaurant (camis)
             const violationsSet = violationsMap.get(camis);
-            const violationsArray: Violation[] = [];
+            let violationsArray: Violation[] = [];
             if (violationsSet) {
               // Convert Set to array and iterate over its elements
               Array.from<Violation>(violationsSet).forEach(
@@ -264,17 +265,18 @@ export default function ViolationMap() {
               );
             }
 
+            // Sort violationsArray based on inspectionDate
+            violationsArray.sort((a, b) => {
+              const dateA = new Date(a.inspectionDate);
+              const dateB = new Date(b.inspectionDate);
+              return dateA.getTime() - dateB.getTime();
+            });
+
             // Generate HTML content for the violations list
             let violationsListHTML = "";
             let violationIndex = 1;
             // prettier-ignore
             if (violationsArray.length > 0) {
-              // Sort the array based on inspection date
-              violationsArray.sort((a, b) => {
-                const dateA = new Date(a.inspectionDate);
-                const dateB = new Date(b.inspectionDate);
-                return dateA.getTime() - dateB.getTime();
-              });
               violationsListHTML = "<ol>";
               violationsArray.forEach((violation: Violation) => {
                 violationsListHTML += `
@@ -413,6 +415,8 @@ export default function ViolationMap() {
           };
         } catch (error) {
           console.error("Error fetching data:", error);
+        } finally {
+          // setLoading(false);
         }
       };
 
@@ -452,17 +456,22 @@ export default function ViolationMap() {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
-      <div id="map" className="w-full h-full"></div>
-
-      {modalVisible && (
-        <div className="modal">
-          <div className="modal-content">
-            <span className="close" onClick={closeModal}>
-              &times;
-            </span>
-            <div dangerouslySetInnerHTML={{ __html: modalContent }}></div>
-          </div>
-        </div>
+      {!loading ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          <div id="map" className="w-full h-full"></div>
+          {modalVisible && (
+            <div className="modal">
+              <div className="modal-content">
+                <span className="close" onClick={closeModal}>
+                  &times;
+                </span>
+                <div dangerouslySetInnerHTML={{ __html: modalContent }}></div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
