@@ -83,6 +83,9 @@ button {
 
 /* Close button */
 .close {
+  position: absolute;
+  top: -5px;
+  right: 7px;
   color: #aaa;
   float: right;
   font-size: 28px;
