@@ -136,6 +136,16 @@ export default function ViolationMap() {
 
           map.addOverlay(overlay);
 
+          // Disable right-clicking on the map
+          map.addEventListener("contextmenu", function (event) {
+            event.preventDefault();
+          });
+
+          // Disable text selection on the map
+          map.addEventListener("mousedown", function (event) {
+            event.preventDefault();
+          });
+
           map.on("singleclick", function (evt) {
             const feature = map.forEachFeatureAtPixel(
               evt.pixel,
@@ -304,10 +314,10 @@ export default function ViolationMap() {
 
             // Display the violations in a modal
             const modalContent = `
-                <div>
-                    <h2><u>Violations for <strong>${dba}</strong></u></h2>
-                    ${violationsListHTML}
-                </div>
+              <div>
+                  <h2><u>Violations for <strong>${dba}</strong></u></h2>
+                  ${violationsListHTML}
+              </div>
             `;
 
             openModal(modalContent);
