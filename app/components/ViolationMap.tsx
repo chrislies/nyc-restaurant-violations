@@ -274,7 +274,7 @@ export default function ViolationMap() {
             violationsArray.sort((a, b) => {
               const dateA = parseDate(a.inspectionDate);
               const dateB = parseDate(b.inspectionDate);
-              return dateA.getTime() - dateB.getTime();
+              return dateB.getTime() - dateA.getTime();
             });
 
             // Generate HTML content for the violations list
