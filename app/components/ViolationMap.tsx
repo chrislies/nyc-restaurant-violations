@@ -430,12 +430,11 @@ export default function ViolationMap() {
           };
         } catch (error) {
           console.error("Error fetching data:", error);
-        } finally {
-          // setLoading(false);
         }
       };
 
       fetchData();
+      setLoading(false);
     }
   }, [overlay]);
 
@@ -471,7 +470,7 @@ export default function ViolationMap() {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
-      {!loading ? (
+      {loading ? (
         <div>Loading...</div>
       ) : (
         <>
