@@ -75,6 +75,8 @@ export default function ViolationMap() {
       closer.blur();
       return false;
     };
+
+    setLoading(false);
   }, []);
 
   const closeModal = () => {
@@ -430,11 +432,12 @@ export default function ViolationMap() {
           };
         } catch (error) {
           console.error("Error fetching data:", error);
+        } finally {
+          setLoading(false);
         }
       };
 
       fetchData();
-      setLoading(false);
     }
   }, [overlay]);
 
