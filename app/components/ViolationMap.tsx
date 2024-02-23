@@ -45,7 +45,7 @@ export default function ViolationMap() {
   const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [mapLoading, setMapLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -75,8 +75,7 @@ export default function ViolationMap() {
       closer.blur();
       return false;
     };
-
-    setLoading(false);
+    setMapLoading(false); // Set mapLoading to true before fetching data
   }, []);
 
   const closeModal = () => {
@@ -432,8 +431,6 @@ export default function ViolationMap() {
           };
         } catch (error) {
           console.error("Error fetching data:", error);
-        } finally {
-          setLoading(false);
         }
       };
 
@@ -473,8 +470,10 @@ export default function ViolationMap() {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
-      {loading ? (
-        <div>Loading...</div>
+      {mapLoading || !dataArray || !overlay ? (
+        <div>
+          <h1>Loading...</h1>
+        </div>
       ) : (
         <>
           <div id="map" className="w-full h-full"></div>
