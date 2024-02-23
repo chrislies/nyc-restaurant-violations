@@ -265,10 +265,15 @@ export default function ViolationMap() {
               );
             }
 
+            const parseDate = (dateString: string): Date => {
+              const [month, day, year] = dateString.split("-").map(Number);
+              return new Date(year, month - 1, day);
+            };
+
             // Sort violationsArray based on inspectionDate
             violationsArray.sort((a, b) => {
-              const dateA = new Date(a.inspectionDate);
-              const dateB = new Date(b.inspectionDate);
+              const dateA = parseDate(a.inspectionDate);
+              const dateB = parseDate(b.inspectionDate);
               return dateA.getTime() - dateB.getTime();
             });
 
