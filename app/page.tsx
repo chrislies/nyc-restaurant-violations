@@ -1,13 +1,13 @@
-import { Suspense } from "react";
-import ViolationMap from "./components/ViolationMap";
-import Loading from "./loading";
+"use client";
+import dynamic from "next/dynamic";
+const DynamicMapComponent = dynamic(() => import("./components/ViolationMap"), {
+  ssr: false,
+});
 
 export default function Home() {
   return (
     <>
-      <Suspense fallback={<Loading />}>
-        <ViolationMap />
-      </Suspense>
+      <DynamicMapComponent />
     </>
   );
 }
