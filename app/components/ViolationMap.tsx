@@ -96,23 +96,23 @@ export default function ViolationMap() {
     fetchUserCoords();
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const fetchViolations = async () => {
-        setLoading(true);
-        try {
-          const data = await getCoordinates();
-          setDataArray(data);
-          console.log(data);
-        } catch (error) {
-          console.error(error);
-        }
-        setLoading(false);
-      };
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     const fetchViolations = async () => {
+  //       setLoading(true);
+  //       try {
+  //         const data = await getCoordinates();
+  //         setDataArray(data);
+  //         console.log(data);
+  //       } catch (error) {
+  //         console.error(error);
+  //       }
+  //       setLoading(false);
+  //     };
 
-      fetchViolations();
-    }
-  }, []);
+  //     fetchViolations();
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -152,67 +152,76 @@ export default function ViolationMap() {
     if (overlay) {
       overlay.setMap(null); // Remove previous overlay from map
 
-      // Initialize the map
-      const centerCoordinates = fromLonLat([-73.920935, 40.780229]);
-      const map = new Map({
-        target: "map",
-        layers: [
-          new TileLayer({
-            source: new OSM({
-              attributions: [],
+      const fetchViolations = async () => {
+        setLoading(true);
+        try {
+          const data = await getCoordinates();
+          setDataArray(data);
+          console.log(data);
+
+          // Initialize the map
+          const centerCoordinates = fromLonLat([
+            -73.88017135962203, 40.71151957593488,
+          ]);
+          const map = new Map({
+            target: "map",
+            layers: [
+              new TileLayer({
+                source: new OSM({
+                  attributions: [],
+                }),
+              }),
+            ],
+            view: new View({
+              center: centerCoordinates,
+              zoom: 11,
+              projection: "EPSG:3857",
             }),
-          }),
-        ],
-        view: new View({
-          center: centerCoordinates,
-          zoom: 13,
-          projection: "EPSG:3857",
-        }),
-      });
-      mapRef.current = map;
+          });
+          mapRef.current = map;
 
-      map.addOverlay(overlay);
+          map.addOverlay(overlay);
 
-      // Disable right-clicking on the map
-      map.addEventListener("contextmenu", function (event) {
-        event.preventDefault();
-      });
+          // Disable right-clicking on the map
+          map.addEventListener("contextmenu", function (event) {
+            event.preventDefault();
+          });
 
-      // Disable text selection on the map
-      map.addEventListener("mousedown", function (event) {
-        event.preventDefault();
-      });
+          // Disable text selection on the map
+          map.addEventListener("mousedown", function (event) {
+            event.preventDefault();
+          });
 
-      map.on("singleclick", function (evt) {
-        const feature = map.forEachFeatureAtPixel(
-          evt.pixel,
-          function (feature, layer) {
-            if (layer instanceof VectorLayer) {
-              if (layer.getSource() instanceof Cluster) {
-                const features = feature.get("features");
-                const zoomLevel = map.getView().getZoom();
-                if (features && zoomLevel !== undefined) {
-                  if (
-                    features.length < 51 ||
-                    (features.length > 50 && zoomLevel >= 15)
-                  ) {
-                    return features;
+          map.on("singleclick", function (evt) {
+            const feature = map.forEachFeatureAtPixel(
+              evt.pixel,
+              function (feature, layer) {
+                if (layer instanceof VectorLayer) {
+                  if (layer.getSource() instanceof Cluster) {
+                    const features = feature.get("features");
+                    const zoomLevel = map.getView().getZoom();
+                    if (features && zoomLevel !== undefined) {
+                      if (
+                        features.length < 51 ||
+                        (features.length > 50 && zoomLevel >= 15)
+                      ) {
+                        return features;
+                      }
+                    }
+                  } else {
+                    return feature;
                   }
                 }
-              } else {
-                return feature;
               }
-            }
-          }
-        );
+            );
 
-        if (feature) {
-          // console.log(feature);
-          const coordinate = evt.coordinate;
-          let popupContent = "";
+            if (feature) {
+              // console.log(feature);
+              const coordinate = evt.coordinate;
+              let popupContent = "";
 
-          // prettier-ignore
-          if (Array.isArray(feature)) {
+              // prettier-ignore
+              if (Array.isArray(feature)) {
                 // If it's an array of features (cluster with less than 11 markers)
                 if (feature.length > 1) {
                   // Check if there are more than 1 markers
@@ -248,85 +257,87 @@ export default function ViolationMap() {
                 }
               }
 
-          (document.getElementById("popup-content") as HTMLElement).innerHTML =
-            popupContent;
-          overlay.setPosition(coordinate);
+              (
+                document.getElementById("popup-content") as HTMLElement
+              ).innerHTML = popupContent;
+              overlay.setPosition(coordinate);
 
-          // Add event listeners to restaurant names
-          const restaurantNames = document.querySelectorAll(".restaurant-name");
-          restaurantNames.forEach((restaurantName) => {
-            restaurantName.addEventListener("click", function (event) {
-              const camis =
-                (event.currentTarget as HTMLElement)?.getAttribute(
-                  "data-camis"
-                ) ?? "Default Value";
-              const dba =
-                (event.currentTarget as HTMLElement)?.getAttribute(
-                  "data-dba"
-                ) ?? "Default Value";
-              if (camis) {
-                // Toggle font-bold class on click
-                const targetElement = event.currentTarget as HTMLElement;
-                if (targetElement) {
-                  document
-                    .querySelectorAll(".restaurant-name")
-                    .forEach((name) => {
-                      name.classList.remove("underline", "decoration-2");
-                    });
+              // Add event listeners to restaurant names
+              const restaurantNames =
+                document.querySelectorAll(".restaurant-name");
+              restaurantNames.forEach((restaurantName) => {
+                restaurantName.addEventListener("click", function (event) {
+                  const camis =
+                    (event.currentTarget as HTMLElement)?.getAttribute(
+                      "data-camis"
+                    ) ?? "Default Value";
+                  const dba =
+                    (event.currentTarget as HTMLElement)?.getAttribute(
+                      "data-dba"
+                    ) ?? "Default Value";
+                  if (camis) {
+                    // Toggle font-bold class on click
+                    const targetElement = event.currentTarget as HTMLElement;
+                    if (targetElement) {
+                      document
+                        .querySelectorAll(".restaurant-name")
+                        .forEach((name) => {
+                          name.classList.remove("underline", "decoration-2");
+                        });
 
-                  targetElement.classList.add("underline", "decoration-2");
-                }
-              }
-              showModal(camis, dba);
-            });
-          });
-        } else {
-          overlay.setPosition(undefined);
-          closeModal();
-        }
-      });
-
-      const openModal = (content: string) => {
-        setModalContent(content);
-        setModalVisible(true);
-      };
-
-      interface Violation {
-        inspectionDate: string;
-        violationCode: string;
-        violationDescription: string;
-      }
-
-      const showModal = (camis: string, dba: string) => {
-        // Fetch the violations for the specified restaurant (camis)
-        const violationsSet = violationsMap.get(camis);
-        let violationsArray: Violation[] = [];
-        if (violationsSet) {
-          // Convert Set to array and iterate over its elements
-          Array.from<Violation>(violationsSet).forEach(
-            (violation: Violation) => {
-              violationsArray.push(violation);
+                      targetElement.classList.add("underline", "decoration-2");
+                    }
+                  }
+                  showModal(camis, dba);
+                });
+              });
+            } else {
+              overlay.setPosition(undefined);
+              closeModal();
             }
-          );
-        }
+          });
 
-        const parseDate = (dateString: string): Date => {
-          const [month, day, year] = dateString.split("-").map(Number);
-          return new Date(year, month - 1, day);
-        };
+          const openModal = (content: string) => {
+            setModalContent(content);
+            setModalVisible(true);
+          };
 
-        // Sort violationsArray based on inspectionDate
-        violationsArray.sort((a, b) => {
-          const dateA = parseDate(a.inspectionDate);
-          const dateB = parseDate(b.inspectionDate);
-          return dateB.getTime() - dateA.getTime();
-        });
+          interface Violation {
+            inspectionDate: string;
+            violationCode: string;
+            violationDescription: string;
+          }
 
-        // Generate HTML content for the violations list
-        let violationsListHTML = "";
-        let violationIndex = 1;
-        // prettier-ignore
-        if (violationsArray.length > 0) {
+          const showModal = (camis: string, dba: string) => {
+            // Fetch the violations for the specified restaurant (camis)
+            const violationsSet = violationsMap.get(camis);
+            let violationsArray: Violation[] = [];
+            if (violationsSet) {
+              // Convert Set to array and iterate over its elements
+              Array.from<Violation>(violationsSet).forEach(
+                (violation: Violation) => {
+                  violationsArray.push(violation);
+                }
+              );
+            }
+
+            const parseDate = (dateString: string): Date => {
+              const [month, day, year] = dateString.split("-").map(Number);
+              return new Date(year, month - 1, day);
+            };
+
+            // Sort violationsArray based on inspectionDate
+            violationsArray.sort((a, b) => {
+              const dateA = parseDate(a.inspectionDate);
+              const dateB = parseDate(b.inspectionDate);
+              return dateB.getTime() - dateA.getTime();
+            });
+
+            // Generate HTML content for the violations list
+            let violationsListHTML = "";
+            let violationIndex = 1;
+            // prettier-ignore
+            if (violationsArray.length > 0) {
               violationsListHTML = "<ol>";
               violationsArray.forEach((violation: Violation) => {
                 violationsListHTML += `
@@ -347,122 +358,129 @@ export default function ViolationMap() {
               violationsListHTML = "<p>No violations found.</p>";
             }
 
-        // Display the violations in a modal
-        const modalContent = `
+            // Display the violations in a modal
+            const modalContent = `
               <div>
                   <h2><u>Violations for <strong>${dba}</strong></u></h2>
                   ${violationsListHTML}
               </div>
             `;
 
-        openModal(modalContent);
-      };
+            openModal(modalContent);
+          };
 
-      // Create a vector source to hold the markers
-      const vectorSource = new VectorSource();
-      // Track violation codes for each restaurant
-      const violationCodesMap = new Map();
-      const violationsMap = new Map();
+          // Create a vector source to hold the markers
+          const vectorSource = new VectorSource();
+          // Track violation codes for each restaurant
+          const violationCodesMap = new Map();
+          const violationsMap = new Map();
 
-      // Add markers for each restaurant
-      // prettier-ignore
-      dataArray.forEach((item) => {
-            const latitude = parseFloat(item.latitude);
-            const longitude = parseFloat(item.longitude);
-            const camis = item.camis;
-            const violationCode = item.violation_code;
-            const violationDescription = item.violation_description;
-            const inspectionDate = item.inspection_date.slice(5,7) + "-" + item.inspection_date.slice(8, 10) + "-" + item.inspection_date.slice(0, 4);
+          // Add markers for each restaurant
+          // prettier-ignore
+          dataArray.forEach((item) => {
+        const latitude = parseFloat(item.latitude);
+        const longitude = parseFloat(item.longitude);
+        const camis = item.camis;
+        const violationCode = item.violation_code;
+        const violationDescription = item.violation_description;
+        const inspectionDate = item.inspection_date.slice(5,7) + "-" + item.inspection_date.slice(8, 10) + "-" + item.inspection_date.slice(0, 4);
 
-            if (camis && violationCode && violationDescription) {
-              const violationData = { inspectionDate, violationCode, violationDescription };
-              const violationsSet =
-                violationsMap.get(camis) || new Set<string>();
-              violationsSet.add(violationData);
-              violationsMap.set(camis, violationsSet);
-            }
+        if (camis && violationCode && violationDescription) {
+          const violationData = { inspectionDate, violationCode, violationDescription };
+          const violationsSet =
+            violationsMap.get(camis) || new Set<string>();
+          violationsSet.add(violationData);
+          violationsMap.set(camis, violationsSet);
+        }
 
-            if (!isNaN(latitude) && !isNaN(longitude)) {
-              const coordinateKey = `${camis},${latitude},${longitude}`;
+        if (!isNaN(latitude) && !isNaN(longitude)) {
+          const coordinateKey = `${camis},${latitude},${longitude}`;
 
-              if (!addedCoordinates.current.has(coordinateKey)) {
-                const marker = new Feature({
-                  geometry: new Point(fromLonLat([longitude, latitude])),
-                });
+          if (!addedCoordinates.current.has(coordinateKey)) {
+            const marker = new Feature({
+              geometry: new Point(fromLonLat([longitude, latitude])),
+            });
 
-                // Set attributes from DataItem interface
-                marker.set("camis", item.camis);
-                marker.set("dba", item.dba);
-                marker.set("longitude", item.longitude);
-                marker.set("latitude", item.latitude);
-                marker.set("violation_code", item.violation_code);
-                marker.set("violation_description", item.violation_description);
-                marker.set("inspection_date", item.inspection_date);
+            // Set attributes from DataItem interface
+            marker.set("camis", item.camis);
+            marker.set("dba", item.dba);
+            marker.set("longitude", item.longitude);
+            marker.set("latitude", item.latitude);
+            marker.set("violation_code", item.violation_code);
+            marker.set("violation_description", item.violation_description);
+            marker.set("inspection_date", item.inspection_date);
 
-                vectorSource.addFeature(marker);
-                addedCoordinates.current.add(coordinateKey);
-              }
-            }
+            vectorSource.addFeature(marker);
+            addedCoordinates.current.add(coordinateKey);
+            // console.log(`Marker added: ${coordinateKey}`);
+          }
+        }
+      });
+
+          // Create a cluster source
+          const clusterSource = new Cluster({
+            distance: calculateClusterDistance(map.getView().getZoom() ?? 0),
+            source: vectorSource,
           });
 
-      // Create a cluster source
-      const clusterSource = new Cluster({
-        distance: calculateClusterDistance(map.getView().getZoom() ?? 0),
-        source: vectorSource,
-      });
+          // Update cluster source distance when map is zoomed
+          map.getView().on("change:resolution", () => {
+            clusterSource.setDistance(
+              calculateClusterDistance(map.getView().getZoom() ?? 0)
+            );
+          });
 
-      // Update cluster source distance when map is zoomed
-      map.getView().on("change:resolution", () => {
-        clusterSource.setDistance(
-          calculateClusterDistance(map.getView().getZoom() ?? 0)
-        );
-      });
+          // Create a vector layer with the cluster source
+          const clusterLayer = new VectorLayer({
+            source: clusterSource,
+            style: (feature) => {
+              const size = feature.get("features").length;
+              if (size === 1) {
+                // Individual marker
+                return new Style({
+                  image: new Icon({
+                    anchor: [0.5, 1],
+                    src: MarkerSvg,
+                  }),
+                });
+              } else {
+                // Cluster
+                return new Style({
+                  image: new CircleStyle({
+                    radius: 10,
+                    fill: new Fill({
+                      color: "#3399CC",
+                    }),
+                    stroke: new Stroke({
+                      color: "#fff",
+                      width: 2,
+                    }),
+                  }),
+                  text: new Text({
+                    text: size.toString(),
+                    fill: new Fill({
+                      color: "#fff",
+                    }),
+                  }),
+                });
+              }
+            },
+          });
 
-      // Create a vector layer with the cluster source
-      const clusterLayer = new VectorLayer({
-        source: clusterSource,
-        style: (feature) => {
-          const size = feature.get("features").length;
-          if (size === 1) {
-            // Individual marker
-            return new Style({
-              image: new Icon({
-                anchor: [0.5, 1],
-                src: MarkerSvg,
-              }),
-            });
-          } else {
-            // Cluster
-            return new Style({
-              image: new CircleStyle({
-                radius: 10,
-                fill: new Fill({
-                  color: "#3399CC",
-                }),
-                stroke: new Stroke({
-                  color: "#fff",
-                  width: 2,
-                }),
-              }),
-              text: new Text({
-                text: size.toString(),
-                fill: new Fill({
-                  color: "#fff",
-                }),
-              }),
-            });
-          }
-        },
-      });
+          // Add the cluster layer to the map
+          map.addLayer(clusterLayer);
 
-      // Add the cluster layer to the map
-      map.addLayer(clusterLayer);
-
-      return () => {
-        if (mapRef.current) {
-          mapRef.current.setTarget(undefined);
+          return () => {
+            if (mapRef.current) {
+              mapRef.current.setTarget(undefined);
+            }
+          };
+        } catch (error) {
+          console.log("Error fetching data:", error);
         }
+        setLoading(false);
       };
+      fetchViolations();
     }
   }, [overlay]);
 
