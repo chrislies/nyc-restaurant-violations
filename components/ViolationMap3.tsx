@@ -87,7 +87,7 @@ function MapComponent() {
       setLoading(false);
     };
 
-    // fetchData();
+    fetchData();
   }, []);
 
   useEffect(() => {
