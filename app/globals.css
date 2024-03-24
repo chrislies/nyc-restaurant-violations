@@ -15,7 +15,8 @@ button {
   border: 1px solid #cccccc;
   bottom: 12px;
   left: -50px;
-  min-width: 280px;
+  /* min-width: 280px; */
+  width: 280px;
 }
 .ol-popup:after,
 .ol-popup:before {
@@ -97,4 +98,12 @@ button {
 .close:focus {
   color: black;
   text-decoration: none;
+}
+
+.user-popup {
+  @apply text-center font-semibold text-lg tracking-tight;
+}
+
+.ol-popup:has(.user-popup) {
+  max-width: max-content;
 }

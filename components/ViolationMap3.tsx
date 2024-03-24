@@ -208,7 +208,7 @@ function MapComponent() {
   }, [map, geolocation]);
 
   useEffect(() => {
-    if (map && overlay) {
+    if (map && overlay && dataArray) {
       overlay.setMap(map);
 
       // Disable right-clicking on the map
@@ -279,6 +279,12 @@ function MapComponent() {
                 <span class="text-xs text-red-500">[${numViolations}]</span>
               </code>`;
             }
+          } else {
+            // If it's the user marker
+            popupContent = `
+            <code class="user-popup">
+              <p>You are in this area</p>
+            </code>`;
           }
 
           (document.getElementById("popup-content") as HTMLElement).innerHTML =
@@ -493,7 +499,23 @@ function MapComponent() {
       // Add the cluster layer to the map
       map.addLayer(clusterLayer);
     }
-  }, [map, overlay]);
+  }, [map, overlay, dataArray]);
+
+  useEffect(() => {
+    const handleClickOutsideModal = (event: MouseEvent) => {
+      const modalContent = document.querySelector(".modal-content");
+      const modal = document.querySelector(".modal");
+      if (modal && modal === event.target) {
+        closeModal();
+      }
+    };
+
+    document.addEventListener("mouseup", handleClickOutsideModal);
+
+    return () => {
+      document.removeEventListener("mouseup", handleClickOutsideModal);
+    };
+  }, []);
 
   return (
     <>
