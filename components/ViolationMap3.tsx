@@ -19,6 +19,8 @@ import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer.js";
 import Loader from "./Loader";
 import { Cluster } from "ol/source";
 import Overlay from "ol/Overlay.js";
+import { Layers, Locate } from "./svgs";
+import { XYZ } from "ol/source";
 
 interface DataItem {
   camis: string;
@@ -63,6 +65,7 @@ if (typeof document !== "undefined") {
 function MapComponent() {
   const [loading, setLoading] = useState(false);
   const [map, setMap] = useState<Map | null>(null);
+  const [mapLayer, setMapLayer] = useState<string>("osmLayer");
   const [geolocation, setGeolocation] = useState<Geolocation | null>(null);
   const [dataArray, setDataArray] = useState<DataItem[]>([]);
   const addedCoordinates = useRef<Set<string>>(new Set());
@@ -84,7 +87,7 @@ function MapComponent() {
       setLoading(false);
     };
 
-    fetchData();
+    // fetchData();
   }, []);
 
   useEffect(() => {
@@ -121,12 +124,40 @@ function MapComponent() {
     setModalVisible(false);
   };
 
+  const toggleLayer = () => {
+    setMapLayer((prevMapLayer) =>
+      prevMapLayer === "osmLayer" ? "satelliteLayer" : "osmLayer"
+    );
+  };
+
+  const locateMe = () => {
+    if (map && geolocation) {
+      const coordinates = geolocation.getPosition();
+      if (coordinates) {
+        map.getView().animate({
+          center: coordinates,
+          zoom: 19,
+          duration: 1000,
+        });
+      }
+    }
+  };
+
   useEffect(() => {
     const initMap = () => {
       const osmLayer = new TileLayer({
         preload: Infinity,
         source: new OSM(),
       });
+
+      const satelliteLayer = new TileLayer({
+        preload: Infinity,
+        source: new XYZ({
+          url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        }),
+      });
+
+      const layer = mapLayer === "osmLayer" ? osmLayer : satelliteLayer;
 
       const view = new View({
         center: fromLonLat([-73.88017135962203, 40.71151957593488]),
@@ -136,7 +167,7 @@ function MapComponent() {
 
       const mapInstance = new Map({
         target: "map",
-        layers: [osmLayer],
+        layers: [layer],
         view: view,
       });
 
@@ -520,6 +551,30 @@ function MapComponent() {
   return (
     <>
       {loading && <Loader />}
+      <div className="absolute bottom-0 flex flex-col justify-between m-3 gap-2">
+        <button
+          onClick={locateMe}
+          title="Locate Me"
+          aria-label="Locate Me"
+          aria-disabled="false"
+          className="z-[999] select-none cursor-pointer relative w-[36px] h-[36px] p-0 bg-white hover:bg-gray-100 text-black rounded-md border-2 border-[rgba(0,0,0,0.2)] shadow-md"
+        >
+          <span className="absolute top-[-16px] left-[-16px] scale-[.4]">
+            <Locate />
+          </span>
+        </button>
+        <button
+          onClick={toggleLayer}
+          title="Toggle Layers"
+          aria-label="Toggle Layers"
+          aria-disabled="false"
+          className="z-[999] select-none cursor-pointer relative w-[50px] h-[50px] p-0 bg-white hover:bg-gray-100 text-black rounded-md border-2 border-[rgba(0,0,0,0.2)] shadow-md"
+        >
+          <span className="absolute top-[-9px] left-[-9px] scale-50">
+            <Layers />
+          </span>
+        </button>
+      </div>
       <div id="map" className="h-screen w-screen" />
       {modalVisible && (
         <div className="modal">
