@@ -132,14 +132,23 @@ function MapComponent() {
 
   const locateMe = () => {
     if (map && geolocation) {
-      const coordinates = geolocation.getPosition();
-      if (coordinates) {
-        map.getView().animate({
-          center: coordinates,
-          zoom: 19,
-          duration: 1000,
+      const position = geolocation.getPosition();
+      if (position) {
+        console.log("Current position:", position);
+        const view = map.getView();
+        const duration = 1000; // milliseconds
+        const zoom = 19;
+        console.log("Animating to:", position, "with zoom:", zoom);
+        view.animate({
+          center: position,
+          zoom: zoom,
+          duration: duration,
         });
+      } else {
+        console.error("Unable to retrieve current position.");
       }
+    } else {
+      console.error("Map or Geolocation instance is not initialized.");
     }
   };
 
@@ -179,9 +188,17 @@ function MapComponent() {
         projection: view.getProjection(),
       });
 
-      const accuracyFeature = new Feature();
+      let accuracyFeature = new Feature();
       geolocationInstance.on("change:accuracyGeometry", function () {
         accuracyFeature.setGeometry(geolocationInstance.getAccuracyGeometry()!);
+        // console.log(`changed position`);
+        if (map && geolocation) {
+          map.getView().animate({
+            center: geolocation.getPosition(),
+            zoom: 19,
+            duration: 1000,
+          });
+        }
       });
 
       const positionFeature = new Feature();
